@@ -177,9 +177,66 @@ void * myRealloc(void * ptr, size_t size){
     
 }
 
+
+
+void splitBlock(struct block_meta *block, size_t size) {
+    size_t remaining = block->size - size;
+
+    if (remaining <= META_SIZE) {
+        return;
+    }
+
+    struct block_meta *newblock =
+        (struct block_meta *)((char *)(block + 1) + size);
+
+    newblock->size = remaining - META_SIZE;
+    newblock->next = block->next;
+    newblock->free = 1;
+
+    block->size = size;
+    block->next = newblock;
+}
+
+void *memoryeffeciantMalloc(size_t size) {
+    if (size == 0) {
+        return NULL;
+    }
+
+    struct block_meta *block;
+
+    if (global_base == NULL) {
+        block = requestSpace(NULL, size);
+
+        if (block == NULL) {
+            return NULL;
+        }
+
+        global_base = block;
+    } else {
+        struct block_meta *last = global_base;
+        block = findFreeBlock(&last, size);
+
+        if (block == NULL) {
+            block = requestSpace(last, size);
+
+            if (block == NULL) {
+                return NULL;
+            }
+        } else {
+            splitBlock(block, size);
+            block->free = 0;
+        }
+    }
+
+    return block + 1;
+}
+
+
+
+
 int main(void){
 
-    int * number = myMalloc2(sizeof(int) * 2);
+    int * number = memoryeffeciantMalloc(sizeof(int) * 2);
 
     number[0] = 1;
     number[1] =  3;
