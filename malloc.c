@@ -232,6 +232,33 @@ void *memoryeffeciantMalloc(size_t size) {
 }
 
 
+void mergeBlocks(struct block_meta * block){
+    struct block_meta * current = block;
+    struct block_meta * prev = NULL;
+    while(current &&  current->next != NULL){
+
+        prev = current;
+        current = current->next;
+
+        if((current->free == 1 && prev->free == 1) && ((char *)(prev + 1) + prev->size == (char *)current)){
+
+            prev -> next = current -> next;
+            prev -> size += META_SIZE + current -> size;
+
+
+
+
+        current = prev;
+
+
+
+        }
+
+
+    }
+}
+
+
 
 
 int main(void){
